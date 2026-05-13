@@ -12,24 +12,33 @@
 
   "browser_action": {
     "default_icon": {
-      "48": "icons/icon-48.svg",
-      "96": "icons/icon-96.svg"
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
     },
     "default_popup": "popup/popup.html",
     "default_title": "Volume Boost"
+  },
+
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+V"
+      },
+      "description": "Open Volume Boost popup"
+    }
   },
 
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content/content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ],
 
   "icons": {
-    "48": "icons/icon-48.svg",
-    "96": "icons/icon-96.svg"
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
   },
 
   "browser_specific_settings": {
