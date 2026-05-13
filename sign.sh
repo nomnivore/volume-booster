@@ -16,24 +16,24 @@ if [[ -z "${AMO_API_KEY:-}" || -z "${AMO_API_SECRET:-}" ]]; then
   exit 1
 fi
 
-# Auto-increment the patch version in manifest.json so AMO accepts the upload.
 current_version=$(grep '"version"' "$MANIFEST" | head -1 | grep -oP '[\d.]+')
-IFS='.' read -r major minor patch <<< "$current_version"
-patch=$(( patch + 1 ))
-new_version="$major.$minor.$patch"
+IFS='.' read -r major minor patch <<<"$current_version"
+new_version="$major.$minor.$((patch + 1))"
 
-# Update manifest.json in-place
+# Bump the version now, but restore on any failure via trap.
 sed -i "s/\"version\": \"$current_version\"/\"version\": \"$new_version\"/" "$MANIFEST"
-echo "Bumped version $current_version -> $new_version"
+trap 'sed -i "s/\"version\": \"$new_version\"/\"version\": \"$current_version\"/" "$MANIFEST"; echo "" >&2; echo "Signing failed — manifest.json restored to $current_version." >&2' ERR
 
 # Sign via AMO unlisted channel
 cd "$SCRIPT_DIR"
-web-ext sign \
+pnpx web-ext sign \
   --channel=unlisted \
   --api-key="$AMO_API_KEY" \
   --api-secret="$AMO_API_SECRET" \
   --artifacts-dir=web-ext-artifacts \
   --ignore-files='.env' '.git' 'web-ext-artifacts' 'sign.sh' 'INSTALL.md'
 
+trap - ERR
 echo ""
+echo "Bumped version $current_version -> $new_version"
 echo "Signed XPI is in web-ext-artifacts/. Install it via about:addons in Zen."
