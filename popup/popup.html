@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volume Boost</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 260px;
+      padding: 16px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      user-select: none;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    header svg {
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .volume-display {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .volume-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #4a9eff;
+      line-height: 1;
+    }
+
+    .volume-label {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .slider-track {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #333355;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4a9eff;
+      border: 2px solid #1a1a2e;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-progress {
+      background: #4a9eff;
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    .tick-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+      padding: 0 2px;
+    }
+
+    .tick-labels span.active {
+      color: #4a9eff;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1;
+      padding: 8px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    button:active {
+      opacity: 0.7;
+    }
+
+    #resetBtn {
+      background: #333355;
+      color: #ccc;
+    }
+
+    .boost-indicator {
+      height: 3px;
+      border-radius: 2px;
+      background: #333355;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .boost-bar {
+      height: 100%;
+      border-radius: 2px;
+      background: #4a9eff;
+      transition: width 0.1s, background 0.2s;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+      <polygon points="4,8 10,8 15,4 15,20 10,16 4,16" fill="#4a9eff"/>
+      <path d="M17,9 Q20,12 17,15" fill="none" stroke="#4a9eff" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M18.5,6.5 Q23,12 18.5,17.5" fill="none" stroke="#4a9eff" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <h1>Volume Boost</h1>
+  </header>
+
+  <div class="volume-display">
+    <div class="volume-value" id="volumeValue">100</div>
+    <div class="volume-label">percent</div>
+  </div>
+
+  <div class="boost-indicator">
+    <div class="boost-bar" id="boostBar"></div>
+  </div>
+
+  <div class="slider-track">
+    <input type="range" id="volumeSlider" min="0" max="200" value="100" step="1" />
+    <div class="tick-labels">
+      <span>0%</span>
+      <span>50%</span>
+      <span id="tick100" class="active">100%</span>
+      <span>150%</span>
+      <span>200%</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button id="resetBtn">Reset to 100%</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
