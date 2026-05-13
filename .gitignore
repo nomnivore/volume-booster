@@ -1,3 +1,4 @@
 .env
 web-ext-artifacts/
 INSTALL.md
+.amo-upload-uuid
