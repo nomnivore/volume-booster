@@ -5,8 +5,15 @@
     let gainParam = null;
     let userGain = 1.0;
     let nativeVolume = 1.0;
-    const wired = new WeakSet();
-    const pending = new Set();
+
+    // Map el → MediaStreamSourceNode so we can disconnect on unwire.
+    const wired = new Map();
+    // Map el → stream, deferred until AudioContext is running.
+    const pending = new Map();
+
+    const proto = HTMLMediaElement.prototype;
+    const protoGet = Object.getOwnPropertyDescriptor(proto, "volume").get;
+    const protoSet = Object.getOwnPropertyDescriptor(proto, "volume").set;
 
     function applyGain() {
       if (gainParam) gainParam.value = userGain * nativeVolume;
@@ -22,48 +29,23 @@
 
       audioCtx.addEventListener("statechange", () => {
         if (audioCtx.state === "running") {
-          for (const el of [...pending]) {
+          for (const [el, stream] of [...pending]) {
             pending.delete(el);
-            wireElement(el);
+            doWire(el, stream);
           }
         }
       });
     }
 
-    async function wireElement(el) {
+    function doWire(el, stream) {
       if (wired.has(el)) return;
 
-      const stream = el.captureStream?.() || el.mozCaptureStream?.();
-      if (!stream || stream.getAudioTracks().length === 0) return;
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(gainNode);
+      wired.set(el, source);
 
-      ensureCtx();
-
-      // Try to resume. If we're in a user gesture context (play/click) this
-      // resolves immediately. If not, the statechange listener will retry.
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume().catch(() => {});
-      }
-
-      // Only mute native output once we're sure the context is running.
-      // If it's still suspended here, park the element and wait.
-      if (audioCtx.state !== "running") {
-        pending.add(el);
-        return;
-      }
-
-      if (wired.has(el)) return; // guard against race after await
-      wired.add(el);
-
-      audioCtx.createMediaStreamSource(stream).connect(gainNode);
-
-      // Mute the element's native output and proxy its volume so
-      // YouTube's own slider continues to scale our gain correctly.
-      const proto = HTMLMediaElement.prototype;
-      const nativeGet = Object.getOwnPropertyDescriptor(proto, "volume").get;
-      const nativeSet = Object.getOwnPropertyDescriptor(proto, "volume").set;
-
-      nativeVolume = nativeGet.call(el);
-      nativeSet.call(el, 0);
+      nativeVolume = protoGet.call(el);
+      protoSet.call(el, 0);
       applyGain();
 
       Object.defineProperty(el, "volume", {
@@ -75,6 +57,48 @@
           applyGain();
         },
       });
+
+      // When YouTube (SPA) loads a new src into the same element, unwire it
+      // so the next play event can re-wire the fresh stream.
+      el.addEventListener("emptied", () => unwireElement(el), { once: true });
+    }
+
+    function unwireElement(el) {
+      const source = wired.get(el);
+      pending.delete(el);
+      if (!source) return;
+      wired.delete(el);
+      source.disconnect();
+      // Restore native volume and remove our volume property override.
+      protoSet.call(el, 1.0);
+      try { delete el.volume; } catch {}
+    }
+
+    async function wireElement(el) {
+      if (wired.has(el)) return;
+
+      const stream = el.captureStream?.() || el.mozCaptureStream?.();
+      if (!stream) return;
+
+      if (stream.getAudioTracks().length === 0) {
+        // Audio tracks not loaded yet — retry as soon as one appears.
+        stream.addEventListener("addtrack", () => wireElement(el), { once: true });
+        return;
+      }
+
+      ensureCtx();
+
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume().catch(() => {});
+      }
+
+      if (audioCtx.state !== "running") {
+        pending.set(el, stream);
+        return;
+      }
+
+      if (wired.has(el)) return; // guard against race after await
+      doWire(el, stream);
     }
 
     new MutationObserver((mutations) => {
@@ -91,7 +115,6 @@
       if (e.target instanceof HTMLMediaElement) wireElement(e.target);
     }, true);
 
-    // Clicks can unlock a suspended AudioContext and flush pending elements.
     document.addEventListener("click", () => {
       if (audioCtx?.state === "suspended") audioCtx.resume().catch(() => {});
     }, true);

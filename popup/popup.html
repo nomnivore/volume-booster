@@ -128,20 +128,6 @@
       color: #ccc;
     }
 
-    .boost-indicator {
-      height: 3px;
-      border-radius: 2px;
-      background: #333355;
-      margin-bottom: 14px;
-      overflow: hidden;
-    }
-
-    .boost-bar {
-      height: 100%;
-      border-radius: 2px;
-      background: #4a9eff;
-      transition: width 0.1s, background 0.2s;
-    }
   </style>
 </head>
 <body>
@@ -159,18 +145,12 @@
     <div class="volume-label">percent</div>
   </div>
 
-  <div class="boost-indicator">
-    <div class="boost-bar" id="boostBar"></div>
-  </div>
-
   <div class="slider-track">
     <input type="range" id="volumeSlider" min="0" max="200" value="100" step="1" />
     <div class="tick-labels">
       <span>0%</span>
-      <span>50%</span>
       <span id="tick100" class="active">100%</span>
-      <span>150%</span>
-      <span>200%</span>
+      <span>400%</span>
     </div>
   </div>
 
