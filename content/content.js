@@ -33,6 +33,8 @@
             pending.delete(el);
             doWire(el, stream);
           }
+        } else if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
         }
       });
     }
