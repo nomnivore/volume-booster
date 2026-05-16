@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Volume Boost — Whitelisted Sites</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    header svg {
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 24px;
+      margin-left: 30px;
+    }
+
+    #emptyState {
+      font-size: 13px;
+      color: #666;
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    #siteList {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #siteList li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #16213e;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+
+    .site-origin {
+      font-size: 13px;
+      color: #e0e0e0;
+      word-break: break-all;
+      min-width: 0;
+    }
+
+    button.remove-btn {
+      flex-shrink: 0;
+      padding: 5px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      background: #333355;
+      color: #ccc;
+      transition: opacity 0.15s;
+    }
+
+    button.remove-btn:hover {
+      opacity: 0.85;
+    }
+
+    button.remove-btn:active {
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+        <polygon points="4,8 10,8 15,4 15,20 10,16 4,16" fill="#4a9eff"/>
+        <path d="M17,9 Q20,12 17,15" fill="none" stroke="#4a9eff" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M18.5,6.5 Q23,12 18.5,17.5" fill="none" stroke="#4a9eff" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <h1>Volume Boost</h1>
+    </header>
+    <p class="subtitle">Whitelisted Sites</p>
+
+    <ul id="siteList"></ul>
+    <p id="emptyState" style="display: none;">No sites added yet. Enable a site from the extension popup.</p>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

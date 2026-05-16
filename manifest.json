@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Volume Boost",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Boost the audio volume of the current tab up to 400%.",
 
   "background": {
@@ -39,6 +39,11 @@
   "icons": {
     "48": "icons/icon-48.png",
     "96": "icons/icon-96.png"
+  },
+
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
   },
 
   "browser_specific_settings": {

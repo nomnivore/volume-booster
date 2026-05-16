@@ -5,6 +5,7 @@
     let gainParam = null;
     let userGain = 1.0;
     let nativeVolume = 1.0;
+    let active = true;
 
     // Map el → MediaStreamSourceNode so we can disconnect on unwire.
     const wired = new Map();
@@ -77,6 +78,7 @@
     }
 
     async function wireElement(el) {
+      if (!active) return;
       if (wired.has(el)) return;
 
       const stream = el.captureStream?.() || el.mozCaptureStream?.();
@@ -133,6 +135,25 @@
       configurable: true,
       get() { return userGain; },
     });
+
+    Object.defineProperty(window, "__vbSetActive__", {
+      configurable: true,
+      set(value) {
+        if (value) {
+          active = true;
+          // Wire any elements currently playing so activation works mid-playback.
+          document.querySelectorAll("audio, video").forEach((el) => {
+            if (!el.paused) wireElement(el);
+          });
+        } else {
+          active = false;
+          for (const el of [...wired.keys()]) {
+            unwireElement(el);
+          }
+          pending.clear();
+        }
+      },
+    });
   }
 
   const s = document.createElement("script");
@@ -145,6 +166,49 @@
       window.wrappedJSObject.__vbSetGain__ = msg.gain;
     } else if (msg.type === "GET_GAIN") {
       return Promise.resolve({ gain: window.wrappedJSObject.__vbGetGain__ ?? 1.0 });
+    }
+  });
+
+  function isHttpOrigin(origin) {
+    return origin.startsWith("http://") || origin.startsWith("https://");
+  }
+
+  async function applyActiveState() {
+    const origin = window.location.origin;
+    // Non-http(s) origins (about:, moz-extension:, etc.) are always active.
+    if (!isHttpOrigin(origin)) {
+      window.wrappedJSObject.__vbSetActive__ = true;
+      return;
+    }
+
+    let settings;
+    try {
+      const result = await browser.storage.local.get("settings");
+      settings = result.settings;
+    } catch {
+      settings = null;
+    }
+
+    let shouldBeActive;
+    if (!settings || typeof settings !== "object") {
+      // Missing or malformed — default to always-on.
+      shouldBeActive = true;
+    } else if (settings.mode === "whitelist") {
+      const list = Array.isArray(settings.whitelist) ? settings.whitelist : [];
+      shouldBeActive = list.includes(origin);
+    } else {
+      // "always-on" or any unrecognised mode.
+      shouldBeActive = true;
+    }
+
+    window.wrappedJSObject.__vbSetActive__ = shouldBeActive;
+  }
+
+  applyActiveState();
+
+  browser.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && "settings" in changes) {
+      applyActiveState();
     }
   });
 })();

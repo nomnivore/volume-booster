@@ -37,6 +37,78 @@
       letter-spacing: 0.02em;
     }
 
+    /* Whitelist section */
+
+    .whitelist-section {
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .whitelist-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .whitelist-row-label {
+      font-size: 12px;
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    /* Toggle switch */
+
+    .toggle-switch {
+      position: relative;
+      flex-shrink: 0;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-switch input[type="checkbox"] {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #333355;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-track::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-track {
+      background: #4a9eff;
+    }
+
+    .toggle-switch input:checked + .toggle-track::after {
+      transform: translateX(16px);
+    }
+
+    /* Volume section */
+
     .volume-display {
       text-align: center;
       margin-bottom: 10px;
@@ -99,7 +171,43 @@
       color: #4a9eff;
     }
 
+    /* Disabled state */
+
+    .volume-section.disabled .volume-display,
+    .volume-section.disabled .slider-track,
+    .volume-section.disabled #resetBtn {
+      opacity: 0.4;
+    }
+
+    .volume-section.disabled input[type="range"] {
+      pointer-events: none;
+    }
+
+    .volume-section.disabled #resetBtn {
+      pointer-events: none;
+    }
+
+    .disabled-message {
+      display: none;
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .volume-section.disabled .disabled-message {
+      display: block;
+    }
+
+    /* Actions */
+
     .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .actions-row {
       display: flex;
       gap: 8px;
     }
@@ -128,6 +236,30 @@
       color: #ccc;
     }
 
+    .manage-sites-link {
+      display: none;
+      text-align: center;
+      font-size: 11px;
+      color: #4a9eff;
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 2px 0;
+      width: 100%;
+      font-family: inherit;
+      font-weight: 400;
+    }
+
+    .manage-sites-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    .manage-sites-link.visible {
+      display: block;
+    }
+
   </style>
 </head>
 <body>
@@ -140,22 +272,46 @@
     <h1>Volume Boost</h1>
   </header>
 
-  <div class="volume-display">
-    <div class="volume-value" id="volumeValue">100</div>
-    <div class="volume-label">percent</div>
-  </div>
-
-  <div class="slider-track">
-    <input type="range" id="volumeSlider" min="0" max="200" value="100" step="1" />
-    <div class="tick-labels">
-      <span>0%</span>
-      <span id="tick100" class="active">100%</span>
-      <span>400%</span>
+  <div class="whitelist-section" id="whitelistSection">
+    <div class="whitelist-row">
+      <span class="whitelist-row-label">Whitelist mode</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="modeToggle" />
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    <div class="whitelist-row" id="siteRow" style="display: none;">
+      <span class="whitelist-row-label" id="siteLabel"></span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="siteToggle" />
+        <span class="toggle-track"></span>
+      </label>
     </div>
   </div>
 
-  <div class="actions">
-    <button id="resetBtn">Reset to 100%</button>
+  <div class="volume-section" id="volumeSection">
+    <div class="volume-display">
+      <div class="volume-value" id="volumeValue">100</div>
+      <div class="volume-label">percent</div>
+    </div>
+
+    <p class="disabled-message">Enable this site to use boost</p>
+
+    <div class="slider-track">
+      <input type="range" id="volumeSlider" min="0" max="200" value="100" step="1" />
+      <div class="tick-labels">
+        <span>0%</span>
+        <span id="tick100" class="active">100%</span>
+        <span>400%</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="actions-row">
+        <button id="resetBtn">Reset to 100%</button>
+      </div>
+      <button class="manage-sites-link" id="manageSitesLink">Manage sites &rarr;</button>
+    </div>
   </div>
 
   <script src="popup.js"></script>
