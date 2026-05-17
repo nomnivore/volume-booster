@@ -1,33 +1,28 @@
 (() => {
   function pageScript() {
     let audioCtx = null;
-    let gainNode = null;
-    let gainParam = null;
     let userGain = 1.0;
-    let nativeVolume = 1.0;
     let active = true;
 
     // Map el → MediaStreamSourceNode so we can disconnect on unwire.
     const wired = new Map();
     // Map el → stream, deferred until AudioContext is running.
     const pending = new Map();
+    const mutedListeners = new WeakSet();
 
     const proto = HTMLMediaElement.prototype;
     const protoGet = Object.getOwnPropertyDescriptor(proto, "volume").get;
     const protoSet = Object.getOwnPropertyDescriptor(proto, "volume").set;
 
     function applyGain() {
-      if (gainParam) gainParam.value = userGain * nativeVolume;
+      for (const { gainParam, nativeVolume } of wired.values()) {
+        gainParam.value = userGain * nativeVolume;
+      }
     }
 
     function ensureCtx() {
       if (audioCtx && audioCtx.state !== "closed") return;
       audioCtx = new AudioContext();
-      gainNode = audioCtx.createGain();
-      gainParam = gainNode.gain;
-      gainParam.value = userGain * nativeVolume;
-      gainNode.connect(audioCtx.destination);
-
       audioCtx.addEventListener("statechange", () => {
         if (audioCtx.state === "running") {
           for (const [el, stream] of [...pending]) {
@@ -44,20 +39,28 @@
       if (wired.has(el)) return;
 
       const source = audioCtx.createMediaStreamSource(stream);
+      const gainNode = audioCtx.createGain();
+      const gainParam = gainNode.gain;
+      const nativeVolume = protoGet.call(el);
+      gainParam.value = userGain * nativeVolume;
       source.connect(gainNode);
-      wired.set(el, source);
-
-      nativeVolume = protoGet.call(el);
+      gainNode.connect(audioCtx.destination);
+      wired.set(el, { source, gainNode, gainParam, nativeVolume });
       protoSet.call(el, 0);
-      applyGain();
 
       Object.defineProperty(el, "volume", {
         configurable: true,
         enumerable: true,
-        get() { return nativeVolume; },
+        get() {
+          const entry = wired.get(el);
+          return entry ? entry.nativeVolume : protoGet.call(el);
+        },
         set(v) {
-          nativeVolume = Math.max(0, Math.min(1, v));
-          applyGain();
+          const entry = wired.get(el);
+          if (entry) {
+            entry.nativeVolume = Math.max(0, Math.min(1, v));
+            entry.gainParam.value = userGain * entry.nativeVolume;
+          }
         },
       });
 
@@ -67,19 +70,32 @@
     }
 
     function unwireElement(el) {
-      const source = wired.get(el);
+      const entry = wired.get(el);
       pending.delete(el);
-      if (!source) return;
+      if (!entry) return;
       wired.delete(el);
-      source.disconnect();
-      // Restore native volume and remove our volume property override.
-      protoSet.call(el, 1.0);
+      entry.source.disconnect();
+      entry.gainNode.disconnect();
+      protoSet.call(el, entry.nativeVolume);
       try { delete el.volume; } catch {}
     }
 
     async function wireElement(el) {
       if (!active) return;
       if (wired.has(el)) return;
+
+      if (el.muted) {
+        if (!mutedListeners.has(el)) {
+          mutedListeners.add(el);
+          el.addEventListener("volumechange", () => {
+            if (!el.muted) {
+              mutedListeners.delete(el);
+              wireElement(el);
+            }
+          });
+        }
+        return;
+      }
 
       const stream = el.captureStream?.() || el.mozCaptureStream?.();
       if (!stream) return;
