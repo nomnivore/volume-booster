@@ -34,6 +34,14 @@ pnpx web-ext sign \
   --ignore-files='.env' '.git' 'web-ext-artifacts' 'sign.sh' 'INSTALL.md'
 
 trap - ERR
+
+# Rename the signed XPI from the AMO slug name to a friendly name.
+signed_xpi=$(find "$SCRIPT_DIR/web-ext-artifacts" -maxdepth 1 -name "*-${new_version}.xpi" | head -1)
+if [[ -n "$signed_xpi" ]]; then
+  target="$SCRIPT_DIR/web-ext-artifacts/volume-booster-${new_version}.xpi"
+  mv "$signed_xpi" "$target"
+fi
+
 echo ""
 echo "Bumped version $current_version -> $new_version"
 echo "Signed XPI is in web-ext-artifacts/. Install it via about:addons in Zen."
